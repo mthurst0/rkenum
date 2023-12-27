@@ -1,2 +1,3 @@
 # rkenum
-golang enum generator
+
+Generate golang enumerations for Rye Knot Dynamics
