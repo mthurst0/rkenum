@@ -52,12 +52,16 @@ type brevBuilder struct {
 }
 
 func (b *brevBuilder) w(s string) {
-	n, err := b.WriteString(s)
+	_, err := b.WriteString(s)
 	if err != nil && b.firstError == nil {
 		b.firstError = err
 	}
-	if n != len(s) && b.firstError == nil {
-		b.firstError = fmt.Errorf("failed to write all bytes")
+}
+
+func (b *brevBuilder) f(format string, args ...any) {
+	_, err := fmt.Fprintf(b, format, args...)
+	if err != nil && b.firstError == nil {
+		b.firstError = err
 	}
 }
 
@@ -82,98 +86,96 @@ func GenerateEnum(
 
 	var b brevBuilder
 	b.w("// Generated code - DO NOT EDIT\n\n")
-	b.w(fmt.Sprintf("package %s\n\n", pkg))
+	b.f("package %s\n\n", pkg)
 	b.w("import (\n")
 	b.w("\t\"fmt\"\n")
 	b.w("\t\"strings\"\n")
 	b.w(")\n\n")
-	b.w(fmt.Sprintf("type %s int\n\n", enumName))
+	b.f("type %s int\n\n", enumName)
 	b.w("const (\n")
 	if !noUnknown {
-		b.w(fmt.Sprintf("\t%sUnknown = %s(iota)\n", enumName, enumName))
+		b.f("\t%sUnknown = %s(iota)\n", enumName, enumName)
 		for _, v := range values {
 			v = rkstrings.ToCamelCase(v)
-			b.w(fmt.Sprintf("\t%s%s\n", enumName, v))
+			b.f("\t%s%s\n", enumName, v)
 		}
 	} else {
 		firstValue := true
 		for _, v := range values {
 			v = rkstrings.ToCamelCase(v)
 			if firstValue {
-				b.w(fmt.Sprintf("\t%s%s = %s(iota)\n", enumName, v, enumName))
+				b.f("\t%s%s = %s(iota)\n", enumName, v, enumName)
 			} else {
-				b.w(fmt.Sprintf("\t%s%s\n", enumName, v))
+				b.f("\t%s%s\n", enumName, v)
 			}
 			firstValue = false
 		}
 	}
-	b.w(fmt.Sprintf("\t%sMax\n", enumName))
+	b.f("\t%sMax\n", enumName)
 	b.w(")\n\n")
 
-	b.w(fmt.Sprintf("func New%sFromString(s string) (%s, error) {\n", enumName, enumName))
+	b.f("func New%sFromString(s string) (%s, error) {\n",
+		enumName, enumName)
 	b.w("\tswitch strings.ToLower(s) {\n")
 	for _, v := range values {
-		b.w(fmt.Sprintf("\tcase \"%s\":\n", v))
-		b.w(fmt.Sprintf("\t\treturn %s%s, nil\n", enumName, rkstrings.ToCamelCase(v)))
+		b.f("\tcase \"%s\":\n", v)
+		b.f("\t\treturn %s%s, nil\n", enumName, rkstrings.ToCamelCase(v))
 	}
 	b.w("\tdefault:\n")
-	b.w(fmt.Sprintf(
-		"\t\treturn %s(0), fmt.Errorf(\"could not convert string to %s: %%s\", s)\n",
-		enumName, enumName))
+	b.f("\t\treturn %s(0), fmt.Errorf(\"could not convert string to %s: %%s\", s)\n",
+		enumName, enumName)
 	b.w("\t}\n")
 	b.w("}\n\n")
 
-	b.w(fmt.Sprintf("func (v %s) String() string {\n", enumName))
-	b.w(fmt.Sprintf("\tswitch v {\n"))
+	b.f("func (v %s) String() string {\n", enumName)
+	b.f("\tswitch v {\n")
 	for _, v := range values {
-		b.w(fmt.Sprintf("\tcase %s%s:\n", enumName, rkstrings.ToCamelCase(v)))
-		b.w(fmt.Sprintf("\t\treturn \"%s\"\n", v))
+		b.f("\tcase %s%s:\n", enumName, rkstrings.ToCamelCase(v))
+		b.f("\t\treturn \"%s\"\n", v)
 	}
 	b.w("\tdefault:\n")
-	b.w(fmt.Sprintf("\t\treturn fmt.Sprintf(\"%s(%%d)\", v)\n", enumName))
+	b.f("\t\treturn fmt.Sprintf(\"%s(%%d)\", v)\n", enumName)
 	b.w("\t}\n")
 	b.w("}\n")
 
 	if len(aliasesMap) > 0 {
-		b.w(fmt.Sprintf("\nfunc New%sFromAlias(s string) (%s, error) {\n",
-			enumName, enumName))
+		b.f("\nfunc New%sFromAlias(s string) (%s, error) {\n",
+			enumName, enumName)
 		b.w("\tswitch strings.ToLower(s) {\n")
 		for _, v := range values {
 			if as, ok := aliasesMap[v]; ok {
 				for _, a := range as {
-					b.w(fmt.Sprintf("\tcase \"%s\":\n", a))
-					b.w(fmt.Sprintf("\t\treturn %s%s, nil\n",
-						enumName, rkstrings.ToCamelCase(v)))
+					b.f("\tcase \"%s\":\n", a)
+					b.f("\t\treturn %s%s, nil\n",
+						enumName, rkstrings.ToCamelCase(v))
 				}
 			}
 		}
 		b.w("\tdefault:\n")
-		b.w(fmt.Sprintf(
-			"\t\treturn %s(0), fmt.Errorf(\"could not convert string to %s: %%s\", s)\n",
-			enumName, enumName))
+		b.f("\t\treturn %s(0), fmt.Errorf(\"could not convert string to %s: %%s\", s)\n",
+			enumName, enumName)
 		b.w("\t}\n")
 		b.w("}\n\n")
 
-		b.w(fmt.Sprintf("\nfunc (v %s) Aliases() []string {\n", enumName))
+		b.f("\nfunc (v %s) Aliases() []string {\n", enumName)
 		b.w("\tswitch v {\n")
 		for _, v := range values {
-			b.w(fmt.Sprintf("\tcase %s%s:\n", enumName, rkstrings.ToCamelCase(v)))
+			b.f("\tcase %s%s:\n", enumName, rkstrings.ToCamelCase(v))
 			b.w("\t\treturn []string{")
 			for _, a := range aliasesMap[v] {
-				b.w(fmt.Sprintf("\"%s\", ", a))
+				b.f("\"%s\", ", a)
 			}
-			b.w(fmt.Sprint("}\n"))
+			b.f("}\n")
 		}
 		b.w("\tdefault:\n")
 		b.w("\t\treturn nil\n")
 		b.w("\t}\n")
 		b.w("}\n")
 	}
-	b.w(fmt.Sprintf("\nfunc New%s(s string) (%s, error) {\n",
-		enumName, enumName))
-	b.w(fmt.Sprintf("\tv, err := New%sFromString(s)\n", enumName))
+	b.f("\nfunc New%s(s string) (%s, error) {\n", enumName, enumName)
+	b.f("\tv, err := New%sFromString(s)\n", enumName)
 	b.w("\tif err != nil {\n")
-	b.w(fmt.Sprintf("\t\tv, err = New%sFromAlias(s)\n", enumName))
+	b.f("\t\tv, err = New%sFromAlias(s)\n", enumName)
 	b.w("\t}\n")
 	b.w("\treturn v, err\n")
 	b.w("}\n\n")
