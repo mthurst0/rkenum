@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mthurst0/rkutil/rkstrings"
+	"github.com/mthurst0/rkstrings"
 	"github.com/spf13/cobra"
 )
 

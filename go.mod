@@ -1,9 +1,9 @@
 module rkenum
 
-go 1.21
+go 1.21.3
 
 require (
-	github.com/mthurst0/rkutil v0.1.2
+	github.com/mthurst0/rkstrings v0.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.17.0
 )
@@ -30,5 +30,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/mthurst0/rkutil => ../rkutil
