@@ -10,8 +10,8 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "rk",
-	Short: "Need some utilities? Rye Knot",
+	Use:   "rkenum",
+	Short: "Need an enum? Rye Knot",
 }
 
 func Execute() {
