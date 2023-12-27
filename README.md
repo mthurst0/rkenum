@@ -1,0 +1,2 @@
+# rkenum
+golang enum generator
