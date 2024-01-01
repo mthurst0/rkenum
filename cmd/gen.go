@@ -186,11 +186,15 @@ func GenerateEnum(
 		b.w("}\n")
 	}
 	b.f("\nfunc %sew%s(s string) (%s, error) {\n", nChar, enumNameTitleCase, enumName)
-	b.f("\tv, err := %sew%sFromString(s)\n", nChar, enumNameTitleCase)
-	b.w("\tif err != nil {\n")
-	b.f("\t\tv, err = %sew%sFromAlias(s)\n", nChar, enumNameTitleCase)
-	b.w("\t}\n")
-	b.w("\treturn v, err\n")
+	if len(aliasesMap) > 0 {
+		b.f("\tv, err := %sew%sFromString(s)\n", nChar, enumNameTitleCase)
+		b.w("\tif err != nil {\n")
+		b.f("\t\tv, err = %sew%sFromAlias(s)\n", nChar, enumNameTitleCase)
+		b.w("\t}\n")
+		b.w("\treturn v, err\n")
+	} else {
+		b.f("\treturn %sew%sFromString(s)\n", nChar, enumNameTitleCase)
+	}
 	b.w("}\n\n")
 
 	return b.String(), nil
