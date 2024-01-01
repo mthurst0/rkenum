@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/mthurst0/rkstrings"
 	"github.com/spf13/cobra"
@@ -84,6 +85,18 @@ func GenerateEnum(
 		return "", err
 	}
 
+	firstRune, _ := utf8.DecodeRuneInString(enumName[:1])
+	firstRuneUpper := rkstrings.IsUpperRune(firstRune)
+	nChar := "n"
+	aChar := "a"
+	sChar := "s"
+	if firstRuneUpper {
+		nChar = "N"
+		aChar = "A"
+		sChar = "S"
+	}
+	enumNameTitleCase := strings.ToTitle(enumName[0:1]) + enumName[1:]
+
 	var b brevBuilder
 	b.w("// Generated code - DO NOT EDIT\n\n")
 	b.f("package %s\n\n", pkg)
@@ -114,8 +127,8 @@ func GenerateEnum(
 	b.f("\t%sMax\n", enumName)
 	b.w(")\n\n")
 
-	b.f("func New%sFromString(s string) (%s, error) {\n",
-		enumName, enumName)
+	b.f("func %sew%sFromString(s string) (%s, error) {\n",
+		nChar, enumNameTitleCase, enumName)
 	b.w("\tswitch strings.ToLower(s) {\n")
 	for _, v := range values {
 		b.f("\tcase \"%s\":\n", v)
@@ -127,7 +140,7 @@ func GenerateEnum(
 	b.w("\t}\n")
 	b.w("}\n\n")
 
-	b.f("func (v %s) String() string {\n", enumName)
+	b.f("func (v %s) %string() string {\n", enumName, sChar)
 	b.f("\tswitch v {\n")
 	for _, v := range values {
 		b.f("\tcase %s%s:\n", enumName, rkstrings.ToCamelCase(v))
@@ -139,8 +152,8 @@ func GenerateEnum(
 	b.w("}\n")
 
 	if len(aliasesMap) > 0 {
-		b.f("\nfunc New%sFromAlias(s string) (%s, error) {\n",
-			enumName, enumName)
+		b.f("\nfunc %sew%sFromAlias(s string) (%s, error) {\n",
+			nChar, enumNameTitleCase, enumName)
 		b.w("\tswitch strings.ToLower(s) {\n")
 		for _, v := range values {
 			if as, ok := aliasesMap[v]; ok {
@@ -157,7 +170,7 @@ func GenerateEnum(
 		b.w("\t}\n")
 		b.w("}\n\n")
 
-		b.f("\nfunc (v %s) Aliases() []string {\n", enumName)
+		b.f("\nfunc (v %s) %sliases() []string {\n", enumName, aChar)
 		b.w("\tswitch v {\n")
 		for _, v := range values {
 			b.f("\tcase %s%s:\n", enumName, rkstrings.ToCamelCase(v))
@@ -172,10 +185,10 @@ func GenerateEnum(
 		b.w("\t}\n")
 		b.w("}\n")
 	}
-	b.f("\nfunc New%s(s string) (%s, error) {\n", enumName, enumName)
-	b.f("\tv, err := New%sFromString(s)\n", enumName)
+	b.f("\nfunc %sew%s(s string) (%s, error) {\n", nChar, enumNameTitleCase, enumName)
+	b.f("\tv, err := %sew%sFromString(s)\n", nChar, enumNameTitleCase)
 	b.w("\tif err != nil {\n")
-	b.f("\t\tv, err = New%sFromAlias(s)\n", enumName)
+	b.f("\t\tv, err = %sew%sFromAlias(s)\n", nChar, enumNameTitleCase)
 	b.w("\t}\n")
 	b.w("\treturn v, err\n")
 	b.w("}\n\n")
