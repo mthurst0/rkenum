@@ -7,4 +7,5 @@ build:
 
 .PHONY: install
 install: build
+	mkdir -p ~/bin
 	cp -v ./rkenum ~/bin
